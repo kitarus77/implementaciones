@@ -1,0 +1,12 @@
+server:
+  port: 8082
+
+spring:
+  profiles:
+    active: local-H2 # Perfil predeterminado, se puede cambiar en runtime
+  application:
+    name: Implementaciones
+  output:
+    ansi: # Habilita los colores en la consola
+      enabled: ALWAYS
+
