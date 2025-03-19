@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openapi.generator' version '7.8.0'
 }
 
 group = 'com.example'
@@ -23,17 +24,43 @@ repositories {
 	mavenCentral()
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	runtimeOnly 'com.h2database:h2:2.1.214'
+apply from: 'gradle/dependencies.gradle'
+apply from: 'gradle/openapi.gradle'
+
+tasks.register('generateOpenApi', org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+	group = 'build'
+	description = 'Genera el código OpenAPI de servidor'
+	inputSpec = "$projectDir/src/main/resources/openApi.yml"
+	generatorName = 'spring'
+	outputDir = "$buildDir/generated"
+	apiPackage = 'com.example.implementations.api'
+	modelPackage = 'com.example.implementations.model'
+	configOptions = [
+			delegatePattern: 'true',
+			useSpringBoot3: 'true'
+	]
 }
 
-//tasks.named('test') {
-//	useJUnitPlatform()
-//}
+// Asegura que la tarea generateOpenApi se ejecute antes de compilar, procesar recursos y empaquetar
+compileJava.dependsOn tasks.named('generateOpenApi')
+processResources.dependsOn tasks.named('generateOpenApi')
+build.dependsOn tasks.named('generateOpenApi')
+bootJar.dependsOn tasks.named('generateOpenApi')
+bootRun.dependsOn tasks.named('generateOpenApi')
+
+// Configuración para compilar el código generado y los recursos
+sourceSets {
+	main {
+		java.srcDir "$buildDir/generated/src/main/java"
+		resources.srcDir "$buildDir/generated/src/main/resources"
+	}
+}
+
+springBoot {
+	mainClass = 'com.example.implementations.ImplementationsApplication'
+}
+
+tasks.named('compileJava') {
+	dependsOn tasks.named('generateOpenApi')
+	source "$buildDir/generated/src/main/java"
+}
