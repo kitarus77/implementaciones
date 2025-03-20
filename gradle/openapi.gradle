@@ -1,0 +1,11 @@
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = "$projectDir/src/main/resources/openApi.yml"
+    apiPackage = 'com.example.implementations.api'
+    modelPackage = 'com.example.implementations.model'
+    //supportingFilesToGenerate = ['ApiUtil.java']
+    configOptions = [
+            delegatePattern: 'true',
+            useSpringBoot3: 'true'
+    ]
+}
